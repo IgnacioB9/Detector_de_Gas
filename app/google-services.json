@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "729096292397",
+    "project_id": "detectordegas-9e867",
+    "storage_bucket": "detectordegas-9e867.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729096292397:android:02ffbbbb19285a265510a4",
+        "android_client_info": {
+          "package_name": "com.example.detectordegas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiQ-Ifj-F2UhfvnsoAvDrzr4LzbJulQwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
