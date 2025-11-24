@@ -72,7 +72,7 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = "Air Icon",
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(90.dp)
                         .padding(bottom = 16.dp),
                     contentScale = ContentScale.Fit
                 )
@@ -80,7 +80,7 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                 // Título principal
                 Text(
                     text = "Crear Cuenta",
-                    fontSize = 20.sp,
+                    fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -88,7 +88,7 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                 // Subtítulo
                 Text(
                     text = "Regístrate para comenzar a monitorear el aire",
-                    fontSize = 14.sp,
+                    fontSize = 17.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
@@ -180,12 +180,12 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                     Text(
                         text = "¿Ya tienes cuenta? ",
                         color = Color.Gray,
-                        fontSize = 14.sp
+                        fontSize = 17.sp
                     )
                     Text(
                         text = "Inicia sesión",
                         color = Color(0xFF0F62FE),
-                        fontSize = 14.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
                             .clickable {
