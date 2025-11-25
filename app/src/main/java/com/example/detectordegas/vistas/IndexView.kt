@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
@@ -29,17 +28,44 @@ fun IndexView(
 ) {
     var connected by remember { mutableStateOf(false) }
     var gasValue by remember { mutableStateOf(0f) }
+    var hasData by remember { mutableStateOf(false) }
 
-    // --- Escuchar datos en tiempo real desde Firebase ---
+    //timestamp de última lectura
+    var lastUpdate by remember { mutableStateOf(0L) }
+
+    // --- Lectura en tiempo real desde Firebase ---
     LaunchedEffect(Unit) {
         val db = FirebaseDatabase.getInstance().getReference("sensor")
 
         db.child("gas").onValue { value ->
-            gasValue = value?.toString()?.toFloatOrNull() ?: 0f
+            lastUpdate = System.currentTimeMillis()
+
+            if (value == null) {
+                hasData = false
+                gasValue = 0f
+            } else {
+                hasData = true
+                gasValue = value.toString().toFloatOrNull() ?: 0f
+            }
         }
 
         db.child("wifi").onValue { value ->
             connected = value == "online"
+            lastUpdate = System.currentTimeMillis()
+        }
+    }
+
+    //verifica la inactividad del sensor
+    LaunchedEffect(Unit) {
+        while (true) {
+            val diff = System.currentTimeMillis() - lastUpdate
+
+            if (diff > 5000) { // 5 segundos sin datos
+                connected = false
+                hasData = false
+            }
+
+            kotlinx.coroutines.delay(3000)
         }
     }
 
@@ -51,20 +77,14 @@ fun IndexView(
                     IconButton(
                         onClick = {
                             auth.signOut()
-
-                            // 👉 Volver al LoginView y limpiar navegación
                             navController.navigate("login") {
                                 popUpTo(0) { inclusive = true }
                             }
                         }
-                    ) {
-
-                    }
+                    ) {}
                 }
             )
-        }, bottomBar = {
-            BottomNavBar(navController)
-        }
+        }, bottomBar = { BottomNavBar(navController) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -95,10 +115,12 @@ fun IndexView(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            if (connected) "Recibiendo datos del sensor..." else "Esperando conexión...",
+                            if (connected) "Recibiendo datos del sensor..."
+                            else "Sin conexión / ESP32 apagado",
                             fontSize = 18.sp
                         )
                     }
+
                     Icon(
                         imageVector = if (connected) Icons.Default.Wifi else Icons.Default.Warning,
                         contentDescription = null,
@@ -126,10 +148,11 @@ fun IndexView(
                     Spacer(Modifier.height(16.dp))
 
                     Text(
-                        String.format("%.2f ppm", gasValue),
+                        if (connected && hasData) String.format("%.2f ppm", gasValue) else "-- ppm",
                         fontSize = 46.sp,
                         fontWeight = FontWeight.Bold,
                         color = when {
+                            !connected || !hasData -> Color.Gray
                             gasValue < 200 -> Color(0xFF22C55E)
                             gasValue < 600 -> Color(0xFFFACC15)
                             else -> Color(0xFFEF4444)
@@ -137,22 +160,29 @@ fun IndexView(
                     )
 
                     Spacer(Modifier.height(16.dp))
-                    LinearProgressIndicator(
-                        progress = (gasValue / 1000f).coerceIn(0f, 1f),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        color = when {
-                            gasValue < 200 -> Color(0xFF22C55E)
-                            gasValue < 600 -> Color(0xFFFACC15)
-                            else -> Color(0xFFEF4444)
-                        }
-                    )
+
+                    if (connected && hasData) {
+                        LinearProgressIndicator(
+                            progress = (gasValue / 1000f).coerceIn(0f, 1f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            color = when {
+                                gasValue < 200 -> Color(0xFF22C55E)
+                                gasValue < 600 -> Color(0xFFFACC15)
+                                else -> Color(0xFFEF4444)
+                            }
+                        )
+                    } else {
+                        Text("Sin datos del sensor", fontSize = 16.sp, color = Color.Gray)
+                    }
 
                     Spacer(Modifier.height(12.dp))
+
                     Text(
                         when {
+                            !connected || !hasData -> "Sin lectura disponible"
                             gasValue < 200 -> "Nivel Seguro"
                             gasValue < 600 -> "Nivel Moderado – Ventila el área"
                             else -> "Nivel Peligroso – Riesgo de explosión"
@@ -186,7 +216,7 @@ fun IndexView(
     }
 }
 
-/* --- Extensión Firebase para obtener datos --- */
+
 fun com.google.firebase.database.DatabaseReference.onValue(callback: (Any?) -> Unit) {
     this.addValueEventListener(object : com.google.firebase.database.ValueEventListener {
         override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
@@ -195,6 +225,5 @@ fun com.google.firebase.database.DatabaseReference.onValue(callback: (Any?) -> U
         override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
     })
 }
-
 
 

@@ -33,16 +33,20 @@ import androidx.navigation.NavController
 import com.example.detectordegas.R
 import com.google.firebase.auth.FirebaseAuth
 
+
 @Composable
 fun RegisterView(navController: NavController, auth: FirebaseAuth) {
+
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var confirm by rememberSaveable { mutableStateOf("") }
     var showPass by rememberSaveable { mutableStateOf(false) }
     var showConfirm by rememberSaveable { mutableStateOf(false) }
+    var passwordStrength by remember { mutableStateOf(0) }
+
     val context = LocalContext.current
 
-    // Fondo degradado suave (igual que LoginView)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -61,45 +65,41 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(8.dp)
         ) {
+
             Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
+                modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Ícono superior
+
                 Image(
                     painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Air Icon",
+                    contentDescription = "Logo",
                     modifier = Modifier
                         .size(90.dp)
                         .padding(bottom = 16.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                // Título principal
                 Text(
                     text = "Crear Cuenta",
                     fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    fontWeight = FontWeight.Bold
                 )
 
-                // Subtítulo
                 Text(
                     text = "Regístrate para comenzar a monitorear el aire",
                     fontSize = 17.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = 20.dp)
                 )
 
-                // Correo electrónico
+
+                // correo
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it.trim() },
                     label = { Text("Correo electrónico") },
-                    placeholder = { Text("Ingresa tu correo") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth()
@@ -107,11 +107,15 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
 
                 Spacer(Modifier.height(14.dp))
 
+
                 // Contraseña
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña (mín. 6)") },
+                    onValueChange = {
+                        password = it
+                        passwordStrength = calcularFuerza(password)
+                    },
+                    label = { Text("Contraseña segura") },
                     placeholder = { Text("Ingresa tu contraseña") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -120,21 +124,57 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                         IconButton(onClick = { showPass = !showPass }) {
                             Icon(
                                 imageVector = if (showPass) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showPass) "Ocultar" else "Mostrar"
+                                contentDescription = null
                             )
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(Modifier.height(6.dp))
+
+
+                // barra de nivel de contraseña
+                val colorFuerza = when (passwordStrength) {
+                    1 -> Color(0xFFEF4444) // rojo
+                    2 -> Color(0xFFF59E0B) // naranja
+                    3 -> Color(0xFF22C55E) // verde
+                    else -> Color.LightGray
+                }
+
+                val textoFuerza = when (passwordStrength) {
+                    1 -> "Débil"
+                    2 -> "Media"
+                    3 -> "Fuerte"
+                    else -> ""
+                }
+
+                if (password.isNotEmpty()) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .height(8.dp)
+                                .fillMaxWidth()
+                                .background(colorFuerza, RoundedCornerShape(4.dp))
+                        )
+                        Text(
+                            text = textoFuerza,
+                            fontSize = 14.sp,
+                            color = colorFuerza,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(14.dp))
 
-                // Confirmar contraseña
+
+                // confirmar contraseña
                 OutlinedTextField(
                     value = confirm,
                     onValueChange = { confirm = it },
                     label = { Text("Confirmar contraseña") },
-                    placeholder = { Text("Vuelve a escribir tu contraseña") },
+                    placeholder = { Text("Repite tu contraseña") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (showConfirm) VisualTransformation.None else PasswordVisualTransformation(),
@@ -142,46 +182,50 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                         IconButton(onClick = { showConfirm = !showConfirm }) {
                             Icon(
                                 imageVector = if (showConfirm) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showConfirm) "Ocultar" else "Mostrar"
+                                contentDescription = null
                             )
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
 
+
                 Spacer(Modifier.height(22.dp))
 
-                // Botón de registro
+
+                // Boton de registrar
                 Button(
                     onClick = {
-                        validarRegistro(email, password, confirm, auth, context, onSuccess = {
-                            navController.popBackStack()
-                            navController.navigate("login")
-                        })
+                        validarRegistro(
+                            email,
+                            password,
+                            confirm,
+                            auth,
+                            context,
+                            onSuccess = {
+                                navController.popBackStack()
+                                navController.navigate("login")
+                            }
+                        )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A))
                 ) {
                     Text("Crear Cuenta", color = Color.White, fontWeight = FontWeight.SemiBold)
                 }
 
+
                 Spacer(Modifier.height(12.dp))
 
-                // Enlace para volver a login
+
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "¿Ya tienes cuenta? ",
-                        color = Color.Gray,
-                        fontSize = 17.sp
-                    )
+                    Text("¿Ya tienes cuenta? ", color = Color.Gray, fontSize = 17.sp)
                     Text(
                         text = "Inicia sesión",
                         color = Color(0xFF0F62FE),
@@ -195,12 +239,73 @@ fun RegisterView(navController: NavController, auth: FirebaseAuth) {
                             .padding(start = 4.dp)
                     )
                 }
+
             }
         }
     }
 }
 
-// --- Validación y creación de usuario ---
+
+
+//Funcion de nivel de contraseña
+private fun calcularFuerza(password: String): Int {
+    var fuerza = 0
+
+    if (password.length >= 8) fuerza++
+    if (password.any { it.isDigit() }) fuerza++
+    if (password.any { it.isUpperCase() }) fuerza++
+    if (password.any { it.isLowerCase() }) fuerza++
+    if (password.any { "!@#\$%^&*(),.?\":{}|<>_-".contains(it) }) fuerza++
+
+    return when (fuerza) {
+        0, 1, 2 -> 1   // Débil
+        3, 4 -> 2      // Media
+        else -> 3      // Fuerte
+    }
+}
+
+
+//validaciones manuales mas detalladas de la contraseña
+private fun esPasswordSegura(password: String, email: String): String? {
+
+    val minLength = 8
+    val regexUpper = Regex(".*[A-Z].*")
+    val regexLower = Regex(".*[a-z].*")
+    val regexDigit = Regex(".*[0-9].*")
+    val regexSpecial = Regex(".*[!@#\$%^&*(),.?\":{}|<>_-].*")
+
+    val contraseñasComunes = listOf(
+        "123456", "password", "qwerty", "123456789",
+        "abc123", "111111", "123123", "admin", "root"
+    )
+
+    if (password.length < minLength)
+        return "La contraseña debe tener al menos $minLength caracteres."
+
+    if (!regexUpper.containsMatchIn(password))
+        return "Debe contener al menos una letra mayúscula."
+
+    if (!regexLower.containsMatchIn(password))
+        return "Debe contener al menos una letra minúscula."
+
+    if (!regexDigit.containsMatchIn(password))
+        return "Debe contener al menos un número."
+
+    if (!regexSpecial.containsMatchIn(password))
+        return "Debe contener al menos un carácter especial."
+
+    if (contraseñasComunes.contains(password.lowercase()))
+        return "La contraseña es muy común. Usa una más segura."
+
+    val userPart = email.substringBefore("@")
+    if (password.contains(userPart, ignoreCase = true))
+        return "La contraseña no debe contener tu correo."
+
+    return null
+}
+
+
+//validacion de registro
 private fun validarRegistro(
     email: String,
     password: String,
@@ -209,38 +314,41 @@ private fun validarRegistro(
     context: Context,
     onSuccess: () -> Unit
 ) {
-    when {
-        email.isBlank() || password.isBlank() || confirm.isBlank() -> {
-            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-        }
 
-        !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-            Toast.makeText(context, "Correo inválido", Toast.LENGTH_SHORT).show()
-        }
-
-        password.length < 6 -> {
-            Toast.makeText(context, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
-        }
-
-        password != confirm -> {
-            Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
-        }
-
-        else -> {
-            auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                        onSuccess()
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Error al registrar usuario: ${task.exception?.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-        }
+    if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
+        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+        return
     }
+
+    if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        Toast.makeText(context, "Correo inválido", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    if (password != confirm) {
+        Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    val error = esPasswordSegura(password, email)
+    if (error != null) {
+        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+        return
+    }
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                onSuccess()
+            } else {
+                Toast.makeText(
+                    context,
+                    "Error: ${task.exception?.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 }
+
 
